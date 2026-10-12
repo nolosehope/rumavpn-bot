@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>РумаВПН — магазин</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  :root {
+    --bg1: #141b3c;
+    --bg2: #0a0e21;
+    --card: rgba(255,255,255,.055);
+    --card-border: rgba(255,255,255,.10);
+    --accent1: #7c6cff;
+    --accent2: #00d1c1;
+    --text: #eef1ff;
+    --muted: #9aa3c7;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background:
+      radial-gradient(130% 90% at 85% -10%, rgba(124,108,255,.28) 0%, transparent 55%),
+      radial-gradient(120% 80% at 0% 0%, rgba(0,209,193,.16) 0%, transparent 50%),
+      linear-gradient(180deg, var(--bg1) 0%, var(--bg2) 60%);
+    color: var(--text);
+    min-height: 100vh;
+    min-height: 100dvh;
+    padding: 0 18px calc(24px + env(safe-area-inset-bottom));
+    user-select: none;
+  }
+
+  header {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 2px 12px;
+    margin: 0 -4px 6px;
+    background: linear-gradient(180deg, rgba(10,14,33,.85) 70%, transparent);
+    backdrop-filter: blur(10px);
+  }
+  .logo {
+    width: 40px; height: 40px; flex: none;
+    display: grid; place-items: center; font-size: 21px;
+    border-radius: 13px;
+    background: linear-gradient(135deg, var(--accent1), var(--accent2));
+    box-shadow: 0 6px 18px rgba(124,108,255,.45);
+  }
+  .brand { font-size: 19px; font-weight: 800; letter-spacing: .2px; }
+  .brand small { display: block; font-size: 11.5px; font-weight: 500; color: var(--muted); letter-spacing: .4px; }
+  .back {
+    margin-left: auto; flex: none;
+    width: 38px; height: 38px; border-radius: 12px;
+    border: 1px solid var(--card-border); background: var(--card);
+    color: var(--text); font-size: 20px; line-height: 1; cursor: pointer;
+  }
+
+  .steps { display: flex; gap: 6px; justify-content: center; margin: 10px 0 18px; }
+  .step {
+    font-size: 11.5px; font-weight: 600; color: var(--muted);
+    padding: 5px 12px; border-radius: 999px;
+    border: 1px solid var(--card-border); background: var(--card);
+    transition: .2s;
+  }
+  .step.active {
+    color: #fff; border-color: transparent;
+    background: linear-gradient(135deg, var(--accent1), var(--accent2));
+  }
+
+  h1 { font-size: 21px; font-weight: 800; margin: 4px 0 6px; }
+  .sub { font-size: 13.5px; color: var(--muted); margin-bottom: 16px; line-height: 1.45; }
+  .hello { font-size: 13px; color: var(--muted); margin-bottom: 14px; }
+  .hello b { color: var(--text); }
+
+  .cards { display: flex; flex-direction: column; gap: 10px; }
+  .card {
+    display: flex; align-items: center; gap: 12px;
+    padding: 15px 16px; border-radius: 18px;
+    background: var(--card); border: 1px solid var(--card-border);
+    cursor: pointer; transition: .15s;
+  }
+  .card:active { transform: scale(.985); }
+  .card.selected {
+    border-color: var(--accent1);
+    background: rgba(124,108,255,.16);
+    box-shadow: inset 0 0 0 1px var(--accent1), 0 8px 24px rgba(124,108,255,.25);
+  }
+  .radio {
+    width: 21px; height: 21px; flex: none; border-radius: 50%;
+    border: 2px solid rgba(255,255,255,.28); position: relative; transition: .15s;
+  }
+  .card.selected .radio { border-color: var(--accent2); }
+  .card.selected .radio::after {
+    content: ""; position: absolute; inset: 3.5px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent1), var(--accent2));
+  }
+  .card .info { flex: 1; min-width: 0; }
+  .card .name { font-size: 16px; font-weight: 700; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .badge {
+    font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px;
+    padding: 3px 8px; border-radius: 999px;
+    background: linear-gradient(135deg, var(--accent1), var(--accent2)); color: #fff;
+  }
+  .card .hint { font-size: 12px; color: var(--muted); margin-top: 3px; }
+  .card .price { font-size: 17px; font-weight: 800; white-space: nowrap; }
+  .card .price small { font-size: 12px; font-weight: 600; color: var(--muted); }
+
+  .features {
+    display: flex; gap: 8px; flex-wrap: wrap; margin-top: 18px;
+    font-size: 12px; color: var(--muted);
+  }
+  .features span {
+    padding: 7px 11px; border-radius: 12px;
+    background: var(--card); border: 1px solid var(--card-border);
+  }
+
+  .summary { border-radius: 18px; background: var(--card); border: 1px solid var(--card-border); overflow: hidden; }
+  .summary .row {
+    display: flex; justify-content: space-between; gap: 10px;
+    padding: 13px 16px; font-size: 14.5px;
+  }
+  .summary .row + .row { border-top: 1px solid var(--card-border); }
+  .summary .row span:first-child { color: var(--muted); }
+  .summary .row b { font-weight: 700; text-align: right; }
+  .summary .total { background: rgba(124,108,255,.12); }
+  .summary .total span:first-child { color: var(--text); font-weight: 700; }
+  .summary .total b { font-size: 18px; background: linear-gradient(135deg, var(--accent1), var(--accent2)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+
+  .note {
+    font-size: 12.5px; color: var(--muted); line-height: 1.5;
+    margin: 14px 2px 0; text-align: center;
+  }
+
+  .cta {
+    width: 100%; margin-top: 18px; padding: 16px;
+    border: none; border-radius: 16px; cursor: pointer;
+    font-size: 16.5px; font-weight: 800; color: #fff; letter-spacing: .2px;
+    background: linear-gradient(135deg, var(--accent1), var(--accent2));
+    box-shadow: 0 10px 28px rgba(124,108,255,.4);
+    transition: .15s;
+  }
+  .cta:active { transform: scale(.98); }
+
+  .overlay[hidden] { display: none; }
+  .overlay {
+    position: fixed; inset: 0; z-index: 50;
+    display: grid; place-items: center; padding: 30px;
+    background: rgba(10,14,33,.92); backdrop-filter: blur(6px);
+    font-size: 15px; line-height: 1.55; text-align: center;
+  }
+
+  section { animation: fade .25s ease; }
+  @keyframes fade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">🛡️</div>
+  <div class="brand">РумаВПН<small>быстрый и безопасный VPN</small></div>
+  <button class="back" id="back" hidden>‹</button>
+</header>
+
+<div class="steps">
+  <span class="step active" data-step="1">1 · Тариф</span>
+  <span class="step" data-step="2">2 · Устройства</span>
+  <span class="step" data-step="3">3 · Оформление</span>
+</div>
+
+<section id="screen1">
+  <h1>Выберите тариф</h1>
+  <p class="sub">Максимальная скорость и безлимитный трафик на всех тарифах</p>
+  <div class="cards" id="tariffCards"></div>
+  <div class="features">
+    <span>⚡ До 1 Гбит/с</span><span>🔒 Без логов</span><span>📺 Стриминги</span><span>🛠 Поддержка 24/7</span>
+  </div>
+</section>
+
+<section id="screen2" hidden>
+  <h1>На скольких устройствах?</h1>
+  <p class="sub">Один ключ — на все выбранные устройства</p>
+  <div class="cards" id="deviceCards"></div>
+</section>
+
+<section id="screen3" hidden>
+  <h1>Проверьте заказ</h1>
+  <p class="sub">Почти готово — осталось оплатить</p>
+  <div class="summary" id="summary"></div>
+  <p class="note">После нажатия кнопки бот пришлёт реквизиты для оплаты<br>и кнопку «Я оплатил» прямо в чат 👇</p>
+  <button class="cta" id="cta">Оформить заказ →</button>
+</section>
+
+<div class="overlay" id="overlay" hidden>
+  <div>Этот магазин работает внутри бота 🛡️<br>Откройте его через кнопку «🛍 Магазин» в Telegram</div>
+</div>
+
+<script>
+  // Цены должны совпадать с config.py у бота
+  var TARIFFS = [
+    { id: "m1", name: "1 месяц",  price: 150, months: 1 },
+    { id: "m3", name: "3 месяца", price: 400, months: 3, badge: "выгодно" },
+    { id: "m6", name: "6 месяцев", price: 700, months: 6, badge: "лучшая цена" }
+  ];
+  var DEVICES = [
+    { count: 1, extra: 0 },
+    { count: 2, extra: 100 },
+    { count: 3, extra: 180 }
+  ];
+
+  var T = window.Telegram && window.Telegram.WebApp;
+  if (T) { T.ready(); T.expand(); }
+
+  var state = { tariff: null, devices: null };
+
+  function fmt(n) { return n.toLocaleString("ru-RU"); }
+  function word(n) { return n === 1 ? "устройство" : "устройства"; }
+  function $(id) { return document.getElementById(id); }
+
+  function haptic() {
+    if (T && T.HapticFeedback) T.HapticFeedback.selectionChanged();
+  }
+
+  function renderTariffs() {
+    var box = $("tariffCards");
+    TARIFFS.forEach(function (t) {
+      var el = document.createElement("div");
+      el.className = "card";
+      var perMonth = Math.round(t.price / t.months);
+      el.innerHTML =
+        '<div class="radio"></div>' +
+        '<div class="info"><div class="name">' + t.name +
+        (t.badge ? ' <span class="badge">' + t.badge + '</span>' : "") +
+        '</div><div class="hint">≈ ' + fmt(perMonth) + ' ₽ в месяц</div></div>' +
+        '<div class="price">' + fmt(t.price) + ' <small>₽</small></div>';
+      el.onclick = function () {
+        state.tariff = t;
+        haptic();
+        go(2);
+      };
+      box.appendChild(el);
+    });
+  }
+
+  function renderDevices() {
+    var box = $("deviceCards");
+    box.innerHTML = "";
+    DEVICES.forEach(function (d) {
+      var total = state.tariff.price + d.extra;
+      var el = document.createElement("div");
+      el.className = "card";
+      el.innerHTML =
+        '<div class="radio"></div>' +
+        '<div class="info"><div class="name">' + d.count + " " + word(d.count) + "</div>" +
+        (d.extra ? '<div class="hint">+' + fmt(d.extra) + ' ₽ к тарифу</div>' : '<div class="hint">входит в тариф</div>') +
+        '</div><div class="price">' + fmt(total) + ' <small>₽</small></div>';
+      el.onclick = function () {
+        state.devices = d.count;
+        haptic();
+        go(3);
+      };
+      box.appendChild(el);
+    });
+  }
+
+  function renderSummary() {
+    var t = state.tariff, total = t.price + extraFor(state.devices);
+    $("summary").innerHTML =
+      row("Тариф", t.name) +
+      row("Устройств", state.devices + " " + word(state.devices)) +
+      '<div class="row total"><span>Итого</span><b>' + fmt(total) + ' ₽</b></div>';
+  }
+  function row(k, v) { return '<div class="row"><span>' + k + "</span><b>" + v + "</b></div>"; }
+  function extraFor(count) {
+    for (var i = 0; i < DEVICES.length; i++) if (DEVICES[i].count === count) return DEVICES[i].extra;
+    return 0;
+  }
+
+  function go(step) {
+    $("screen1").hidden = step !== 1;
+    $("screen2").hidden = step !== 2;
+    $("screen3").hidden = step !== 3;
+    document.querySelectorAll(".step").forEach(function (s) {
+      s.classList.toggle("active", +s.dataset.step === step);
+    });
+    $("back").hidden = step === 1;
+    if (step === 2) renderDevices();
+    if (step === 3) renderSummary();
+    window.scrollTo(0, 0);
+  }
+
+  $("back").onclick = function () {
+    haptic();
+    var cur = document.querySelector(".step.active").dataset.step;
+    go(Math.max(1, +cur - 1));
+  };
+
+  $("cta").onclick = function () {
+    if (!state.tariff || !state.devices) return;
+    if (T && typeof T.sendData === "function") {
+      if (T.HapticFeedback) T.HapticFeedback.impactOccurred("medium");
+      T.sendData(JSON.stringify({ t: state.tariff.id, d: state.devices }));
+      T.close();
+    } else {
+      $("overlay").hidden = false;
+    }
+  };
+
+  if (T && T.initDataUnsafe && T.initDataUnsafe.user) {
+    var u = T.initDataUnsafe.user;
+    var p = document.createElement("p");
+    p.className = "hello";
+    p.innerHTML = "Привет, <b>" + (u.first_name || "друг") + "</b>! 👋";
+    var first = $("screen1");
+    first.insertBefore(p, first.firstChild);
+  }
+
+  renderTariffs();
+  go(1);
+</script>
+</body>
+</html>
